@@ -4,7 +4,7 @@ use futures_util::Stream;
 use std::collections::HashMap;
 use std::net::{Ipv4Addr, SocketAddr};
 use std::str;
-use tokio::net::UdpSocket;
+use tokio::net::{ToSocketAddrs, UdpSocket};
 
 use crate::parser::parse_location;
 use crate::types::Device;
@@ -16,10 +16,11 @@ const DISCOVERY_REQUEST: &str = "M-SEARCH * HTTP/1.1\r\n\
                                  ST: ssdp:all\r\n\
                                  \r\n";
 
-pub async fn discover_pnp_locations(interface: Ipv4Addr) -> Result<impl Stream<Item = Device>> {
-    let any: SocketAddr = ([0, 0, 0, 0], 0).into();
-    let socket = UdpSocket::bind(any).await?;
-    socket.join_multicast_v4(Ipv4Addr::new(239, 255, 255, 250), interface)?;
+pub async fn discover_pnp_locations<T>(local_addr: T) -> Result<impl Stream<Item = Device>> 
+where T: ToSocketAddrs
+{
+    let socket = UdpSocket::bind(local_addr).await?;
+    socket.join_multicast_v4(Ipv4Addr::new(239, 255, 255, 250), Ipv4Addr::new(0, 0, 0, 0))?;
 
     // Set the socket address to the multicast IP and port for UPnP device discovery
     let socket_addr: SocketAddr = ([239, 255, 255, 250], 1900).into();

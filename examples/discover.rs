@@ -6,7 +6,7 @@ use upnp_client::discovery::discover_pnp_locations;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let devices = discover_pnp_locations(Ipv4Addr::new(0, 0, 0, 0)).await?;
+    let devices = discover_pnp_locations(("0.0.0.0", 0)).await?;
     tokio::pin!(devices);
 
     while let Some(device) = devices.next().await {
